@@ -19,7 +19,7 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 
-dbConnect();
+
 app.use(morgan("dev"));
 app.use(cors());
 app.use(bodyParser.json());
@@ -39,5 +39,6 @@ app.use("/api/upload", uploadRouter);
 app.use(notFound);
 app.use(errorHandler);
 app.listen(PORT, () => {
+  dbConnect();
   console.log(`Server is running  at PORT ${PORT}`);
 });

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose"); // Erase if already required
 
 // Declare the Schema of the Mongo model
-var blogSchema = new mongoose.Schema(
+var feedbackSchema = new mongoose.Schema(
   {
     title: {
       type: String,
@@ -58,4 +58,4 @@ var blogSchema = new mongoose.Schema(
 );
 
 //Export the model
-module.exports = mongoose.model("Blog", blogSchema);
+module.exports = mongoose.model("Feedback",feedbackSchema);
