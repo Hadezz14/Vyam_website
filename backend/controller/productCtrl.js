@@ -47,7 +47,7 @@ const getaProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
   validateMongoDbId(id);
   try {
-    const findProduct = await Product.findById(id);
+    const findProduct = await Product.findById(id).populate("color");
     res.json(findProduct);
   } catch (error) {
     throw new Error(error);
@@ -100,7 +100,9 @@ const getAllProduct = asyncHandler(async (req, res) => {
   }
 });
 const addToWishlist = asyncHandler(async (req, res) => {
+  console.log(req.user);
   const { _id } = req.user;
+  
   const { prodId } = req.body;
   try {
     const user = await User.findById(_id);
