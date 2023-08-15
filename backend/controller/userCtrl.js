@@ -195,12 +195,13 @@ const saveAddress = asyncHandler(async (req, res, next) => {
 
 const getallUser = asyncHandler(async (req, res) => {
   try {
-    const getUsers = await User.find().populate("wishlist");
-    res.json(getUsers);
+    const users = await User.find({ role: { $ne: 'admin' } }).populate("wishlist");
+    res.json(users);
   } catch (error) {
     throw new Error(error);
   }
 });
+
 
 // Get a single user
 
