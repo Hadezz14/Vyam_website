@@ -451,11 +451,27 @@ const getOrders = asyncHandler(async (req, res) => {
   }
 });
 
+const getMyOrders = asyncHandler(async(req,res)=>{
+  const {_id} = req.user;
+  try {
+    const orders = await Order.find({user:_id})
+    .populate("user")
+    .populate("orderedItems.product")
+    .populate("orderedItems.color")
+    res.json({
+      orders
+    })
+  } catch (error) {
+    throw new Error(error)
+  }
+})
+
 const getAllOrders = asyncHandler(async (req, res) => {
   try {
     const alluserorders = await Order.find()
-      .populate("orderedItems.product")
       .populate("user")
+      .populate("orderedItems.product")
+      .populate("orderedItems.color")
       .exec();
 
     res.json(alluserorders);
@@ -526,4 +542,5 @@ module.exports = {
   getOrderByUserId,
   reomveProductFromCart,
   updateProductQuantityFromCart,
+  getMyOrders,
 };
