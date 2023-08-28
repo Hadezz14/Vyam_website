@@ -22,11 +22,11 @@ var productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    category: {
-      type: String,
+    profit: {
+      type: Number,
       required: true,
     },
-    brand: {
+    category: {
       type: String,
       required: true,
     },
@@ -38,17 +38,17 @@ var productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    color: [
+      {
+        type: String,
+        required: true,
+      },
+    ],    
     images: [
       {
         public_id: String,
         url: String,
       },
-    ],
-    color: [
-      {
-        type:mongoose.Schema.Types.ObjectId,
-        ref: "Color",
-      }
     ],
     tags: String,
     ratings: [

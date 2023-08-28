@@ -182,12 +182,13 @@ const saveAddress = asyncHandler(async (req, res, next) => {
 
 const getallUser = asyncHandler(async (req, res) => {
   try {
-    const getUsers = await User.find().populate("wishlist");
+    const getUsers = await User.find({ role: { $ne: "admin" } }).populate("wishlist");
     res.json(getUsers);
   } catch (error) {
     throw new Error(error);
   }
 });
+
 
 // Get a single user
 
@@ -257,7 +258,7 @@ const unblockUser = asyncHandler(async (req, res) => {
     );
     res.json({
       message: "User UnBlocked",
-    });
+    }, unblock);
   } catch (error) {
     throw new Error(error);
   }
@@ -493,9 +494,11 @@ const getOrderByUserId = asyncHandler(async (req, res) => {
     throw new Error(error);
   }
 });
+
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
+  console.log(status)
   validateMongoDbId(id);
   try {
     const updateOrderStatus = await Order.findByIdAndUpdate(
