@@ -23,7 +23,11 @@ var enqSchema = new mongoose.Schema({
     default: "Submitted",
     enum: ["Submitted", "Contacted", "In Progress", "Resolved"],
   },
-});
+}
+,
+  {
+    timestamps: true,
+  });
 
 //Export the model
 module.exports = mongoose.model("Enquiry", enqSchema);
