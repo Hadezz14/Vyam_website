@@ -217,6 +217,63 @@ const rating = asyncHandler(async (req, res) => {
   }
 });
 
+const updateProductDiscount = async (req, res) => {
+  try {
+    const { productIds, discount } = req.body;
+    console.log(req.body)
+
+    // Validate the inputs (e.g., check if productIds is an array, and if discount is valid)
+    if (!Array.isArray(productIds) || productIds.length === 0 || !discount || discount < 1 || discount > 100) {
+      return res.status(400).json({ message: 'Invalid input data' });
+    }
+
+    const updatedProducts = await Promise.all(productIds.map(async (productId) => {
+      console.log(productId)
+      const updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        { discount: discount },
+        { new: true }
+      );
+      return updatedProduct;
+    }));
+
+    const notFoundProducts = updatedProducts.filter((product) => !product);
+    if (notFoundProducts.length > 0) {
+      return res.status(404).json({ message: 'Some products not found' });
+    }
+
+    return res.status(200).json({ message: 'Discount updated successfully for all products' });
+  } catch (error) {
+    console.error('Error updating product discounts:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+const deleteDiscount = async (req, res) => {
+  try {
+    const { productIds } = req.body;
+
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ message: 'Invalid input data' });
+    }
+
+    const updatedProducts = await Product.updateMany(
+      { _id: { $in: productIds } },
+      { $unset: { discount: 1 } }
+    );
+
+    if (updatedProducts.nModified === 0) {
+      return res.status(404).json({ message: 'No products found for the given IDs' });
+    }
+
+    return res.status(200).json({ message: 'Discount removed successfully for selected products' });
+  } catch (error) {
+    console.error('Error deleting product discounts:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   createProduct,
   getaProduct,
@@ -225,4 +282,6 @@ module.exports = {
   deleteProduct,
   addToWishlist,
   rating,
+  updateProductDiscount,
+  deleteDiscount
 };

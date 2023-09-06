@@ -34,6 +34,11 @@ var productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    discount: {
+      type: Number,
+      max: 100,
+      min:1,
+    },
     sold: {
       type: Number,
       default: 0,
