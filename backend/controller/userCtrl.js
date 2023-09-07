@@ -128,7 +128,9 @@ const logout = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true,
   });
-  res.sendStatus(204); // forbidden
+  res.sendStatus(204);
+  
+  
 });
 
 // Update a user
@@ -424,7 +426,7 @@ const emptyCart = asyncHandler(async (req, res) => {
 // });
 
 const createOrder = asyncHandler(async (req, res) => {
-  const {shippingInfo,orderedItems,totalPrice} = req.body;
+  const {shippingInfo,orderedItems,totalPrice,totalPriceAfterDiscount,profit} = req.body;
   const { _id } = req.user;
   try {
     const order = await Order.create({
@@ -432,6 +434,7 @@ const createOrder = asyncHandler(async (req, res) => {
       orderedItems,
       totalPrice,
       totalPriceAfterDiscount,
+      profit,
       user:_id,
     })
     res.json({

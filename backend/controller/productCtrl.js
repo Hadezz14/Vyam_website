@@ -60,9 +60,11 @@ const updateProduct = asyncHandler(async (req, res) => {
 
 const deleteProduct = asyncHandler(async (req, res) => {
   const id = req.params;
-  validateMongoDbId(id);
+ const _id = id.id
   try {
-    const deleteProduct = await Product.findOneAndDelete(id);
+    console.log(_id);
+    const deleteProduct = await Product.findByIdAndDelete(_id);
+    console.log(deleteProduct);
     res.json(deleteProduct);
   } catch (error) {
     throw new Error(error);

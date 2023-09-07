@@ -41,6 +41,10 @@ var orderSchema = new mongoose.Schema(
           ref: "Product",
           required: true
         },
+        productName: {
+          type: String,
+          required: true,
+        },
         color:{
           type:String,
           required: true
@@ -64,6 +68,10 @@ var orderSchema = new mongoose.Schema(
       required: true
     },
     totalPriceAfterDiscount:{
+      type: Number,
+      requied: true,
+    },
+    profit:{
       type: Number,
       requied: true,
     },
