@@ -1,7 +1,7 @@
 const User = require("../models/userModel");
 const Product = require("../models/productModel");
 const Cart = require("../models/cartModel");
-// const Coupon = require("../models/couponModel");
+const Coupon = require("../models/couponModel");
 const Order = require("../models/orderModel");
 const uniqid = require("uniqid");
 
@@ -12,6 +12,7 @@ const { generateRefreshToken } = require("../config/refreshtoken");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("./emailCtrl");
+const couponModel = require("../models/couponModel");
 
 // Create a User ----------------------------------------------
 
@@ -396,34 +397,34 @@ const emptyCart = asyncHandler(async (req, res) => {
   }
 });
 
-// const applyCoupon = asyncHandler(async (req, res) => {
-//   const { coupon } = req.body;
-//   const { _id } = req.user;
-//   const currentDate = new Date();
-//   try {
-//     const validCoupon = await Coupon.findOne({name: coupon});
+const applyCoupon = asyncHandler(async (req, res) => {
+  const { promoCode, userId } = req.body;
 
+  try {
+    // Find the promo code document
+    const promoCodeDoc = await Coupon.findOne({ name: promoCode });
 
-//     if (!validCoupon) {
-//       throw new Error("Invalid Coupon");
-//     }
-//     const user = await User.findOne({_id});
-//     const order = await Order.findOne({user}).populate("orderedItems.product");
-//     let cartTotal = 0;
+    if (!promoCodeDoc) {
+      return res.status(404).json({ error: 'Promo code not found.' });
+    }
 
-//     for(const item of order.orderedItems){
-//       cartTotal += item.price * item.quantity;
+    // Check if the user has already used the code
+    if (promoCodeDoc.usedBy.includes(userId)) {
+      return res.status(400).json({ error: 'Promo code already used by this user.' });
+    }
 
-//     }
-//     let totalAfterDiscount = (cartTotal-(cartTotal * validCoupon.discount)/100).toFixed(2);
-//     order.totalPriceAfterDiscount = parseFloat(totalAfterDiscount);
-//     await order.save();
-//     res.json(order)
-//     res.json(totalAfterDiscount)
-//   } catch (error) {
-//     res.status(400).json({error:error.message})
-//   }
-// });
+    const discount = promoCodeDoc.discount;
+
+    // Insert the user's ID into the "usedBy" array
+    promoCodeDoc.usedBy.push(userId);
+    await promoCodeDoc.save();
+
+    res.status(200).json({ message: 'Promo code applied successfully.', discount });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
 
 const createOrder = asyncHandler(async (req, res) => {
   const {shippingInfo,orderedItems,totalPrice,totalPriceAfterDiscount,profit} = req.body;
@@ -550,4 +551,5 @@ module.exports = {
   reomveProductFromCart,
   updateProductQuantityFromCart,
   getMyOrders,
+  applyCoupon
 };
