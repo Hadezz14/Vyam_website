@@ -26,6 +26,7 @@ const {
   reomveProductFromCart,
   updateProductQuantityFromCart,
   getMyOrders,
+  applyCoupon,
   googleSignIn,
 } = require("../controller/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
@@ -40,7 +41,7 @@ router.post("/login", loginUserCtrl);
 router.post("/admin-login", loginAdmin);
 router.post("/google-login",googleSignIn);
 router.post("/cart", authMiddleware, userCart);
-// router.post("/cart/applycoupon", authMiddleware, applyCoupon);
+router.post("/cart/applycoupon", applyCoupon);
 router.post("/cart/create-order", authMiddleware, createOrder);
 router.get("/all-users", getallUser);
 router.get("/get-orders", authMiddleware, getOrders);
