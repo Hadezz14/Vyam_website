@@ -6,11 +6,11 @@ var userSchema = new mongoose.Schema(
   {
     firstname: {
       type: String,
-      required: true,
+      // required: true,
     },
     lastname: {
       type: String,
-      required: true,
+      // required: true,
     },
     email: {
       type: String,
@@ -19,12 +19,12 @@ var userSchema = new mongoose.Schema(
     },
     mobile: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
     },
     password: {
       type: String,
-      required: true,
+      // required: true,
     },
     role: {
       type: String,

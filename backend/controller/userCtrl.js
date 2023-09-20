@@ -522,6 +522,49 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 });
 
+const googleSignIn = async(req,res) =>{
+  const {email,firstname,mobile} = req.body;
+  try{
+    let user = await User.findOne({email});
+    if(!user){
+      user = new User({
+        email,
+        firstname,
+        lastname:'',
+        mobile,
+        role:'user',
+        isBlocked: false,
+        cart:[],
+        address:'',
+        wishlist:[],
+      
+      });
+      await user.save();
+    }
+    const token = generateToken(user._id);
+    const refreshToken = await generateRefreshToken(user._id);
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken,{
+      httpOnly: true,
+      maxAge:72*60*60*100,
+    });
+    res.json({
+      _id:user?._id,
+      firstname: user?.firstname,
+      lastname:user?.lastname,
+      email:user?.email,
+      mobile:user?.mobile,
+      token:token,
+    })
+  }
+  catch(error){
+    console.error("Error during Google Sign-in:", error)
+    res.status(500).json({message: "Internal server error"});
+  }
+}
+
 module.exports = {
   createUser,
   loginUserCtrl,
@@ -550,4 +593,5 @@ module.exports = {
   reomveProductFromCart,
   updateProductQuantityFromCart,
   getMyOrders,
+  googleSignIn,
 };

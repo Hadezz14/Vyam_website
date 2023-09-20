@@ -26,6 +26,7 @@ const {
   reomveProductFromCart,
   updateProductQuantityFromCart,
   getMyOrders,
+  googleSignIn,
 } = require("../controller/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
@@ -37,6 +38,7 @@ router.put("/reset-password/:token", resetPassword);
 router.put("/password", authMiddleware, updatePassword);
 router.post("/login", loginUserCtrl);
 router.post("/admin-login", loginAdmin);
+router.post("/google-login",googleSignIn);
 router.post("/cart", authMiddleware, userCart);
 // router.post("/cart/applycoupon", authMiddleware, applyCoupon);
 router.post("/cart/create-order", authMiddleware, createOrder);
