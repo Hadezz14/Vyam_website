@@ -595,4 +595,5 @@ module.exports = {
   updateProductQuantityFromCart,
   getMyOrders,
   googleSignIn,
+  applyCoupon,
 };
