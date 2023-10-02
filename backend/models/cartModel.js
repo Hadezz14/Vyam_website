@@ -17,15 +17,16 @@ var cartSchema = new mongoose.Schema(
    },
    price:{
     type: Number,
-    required:true
+    required:true,
    },
-  //  color: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref:"Color",
-  //  }
+  
   color:{
     type: mongoose.Schema.Types.ObjectId,
     ref:"Color",
+  },
+  size:{
+    type:String,
+    required:true,
   }
   },
   {

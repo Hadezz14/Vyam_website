@@ -329,7 +329,7 @@ const getWishlist = asyncHandler(async (req, res) => {
 });
 
 const userCart = asyncHandler(async (req, res) => {
-  const { productId, colour, quantity,price } = req.body;
+  const { productId, colour, quantity,price,size } = req.body;
   const { _id } = req.user;
   validateMongoDbId(_id);
   try {
@@ -338,7 +338,8 @@ const userCart = asyncHandler(async (req, res) => {
       productId, 
       colour,
       price,
-      quantity
+      quantity,
+      size
     }).save();
     res.json(newCart);
   } catch (error) {
@@ -532,7 +533,7 @@ const googleSignIn = async(req,res) =>{
         email,
         firstname,
         lastname:'',
-        mobile,
+        mobile:mobile || '',
         role:'user',
         isBlocked: false,
         cart:[],
@@ -595,4 +596,5 @@ module.exports = {
   updateProductQuantityFromCart,
   getMyOrders,
   googleSignIn,
+  applyCoupon,
 };
