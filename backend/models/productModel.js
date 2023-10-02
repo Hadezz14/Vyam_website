@@ -30,10 +30,12 @@ var productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    quantity: {
-      type: Number,
-      required: true,
-    },
+    size: [
+      {
+        size: String,
+        quantity: Number,
+      },
+    ],    
     discount: {
       type: Number,
       max: 100,
