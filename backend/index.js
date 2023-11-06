@@ -19,7 +19,7 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 const corsOptions = {
-  origin: "http://vyamstore.com", // Replace with the actual domain you want to allow
+  origin: "https://vyamstore.com",
 };
 
 app.use(morgan("dev"));
