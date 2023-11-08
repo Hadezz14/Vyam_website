@@ -16,13 +16,13 @@ const couponModel = require("../models/couponModel");
 
 // Create a User ----------------------------------------------
 
-const createUser = asyncHandler(async (req, res) => {  
+const createUser = asyncHandler(async (req, res) => {
   const email = req.body.email;
   const findUser = await User.findOne({ email: email });
-  if (!findUser) {  
+  if (!findUser) {
     const newUser = await User.create(req.body);
     res.json(newUser);
-  } else {  
+  } else {
     throw new Error("User Already Exists");
   }
 });
@@ -58,42 +58,120 @@ const loginUserCtrl = asyncHandler(async (req, res) => {
   }
 });
 
+// optgeneration
+const generateOTP = () => {
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  return otp.toString();
+};
+
 // admin login
 
 const loginAdmin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   // check if user exists or not
   const findAdmin = await User.findOne({ email });
-  if(!findAdmin){
-    return res.status(401).json({status:'fail',message:"User not found"});
+  if (!findAdmin) {
+    return res.status(401).json({ status: "fail", message: "User not found" });
   }
-  if (findAdmin.role !== "admin"){
-    return res.status(403).json({status:'fail',message:"Not Authorized"})
-  };
+  if (findAdmin.role !== "admin") {
+    return res.status(403).json({ status: "fail", message: "Not Authorized" });
+  }
   if (findAdmin && (await findAdmin.isPasswordMatched(password))) {
-    const refreshToken = await generateRefreshToken(findAdmin?._id);
-    const updateuser = await User.findByIdAndUpdate(
-      findAdmin.id,
-      {
-        refreshToken: refreshToken,
-      },
-      { new: true }
-    );
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
+    // Generate OTP
+    console.log("Password Check");
+    const otp = generateOTP();
+
+    findAdmin.otp = otp;
+    console.log(otp);
+    await findAdmin.save();
+
+    await sendEmail.sendOTPByEmail(findAdmin.email, otp);
+
+    // const refreshToken = await generateRefreshToken(findAdmin?._id);
+    // const updateuser = await User.findByIdAndUpdate(
+    //   findAdmin.id,
+    //   {
+    //     refreshToken: refreshToken,
+    //   },
+    //   { new: true }
+    // );
+    // res.cookie("refreshToken", refreshToken, {
+    //   httpOnly: true,
+    //   maxAge: 72 * 60 * 60 * 1000,
+    // });
     res.json({
       _id: findAdmin?._id,
       firstname: findAdmin?.firstname,
       lastname: findAdmin?.lastname,
       email: findAdmin?.email,
       mobile: findAdmin?.mobile,
-      token: generateToken(findAdmin?._id),
+      // token: generateToken(findAdmin?._id),
     });
   } else {
-    return res.status(401).json({ status: 'fail', message: 'Invalid Credentials' });
+    return res
+      .status(401)
+      .json({ status: "fail", message: "Invalid Credentials" });
   }
+});
+
+const verifyotp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  // check if user exists or not
+  const findAdmin = await User.findOne({ email });
+
+  if (!findAdmin) {
+    return res.status(401).json({ status: "fail", message: "User not found" });
+  }
+
+  if (findAdmin.role !== "admin") {
+    return res.status(403).json({ status: "fail", message: "Not Authorized" });
+  }
+
+  if (!findAdmin.otp) {
+    // Generate OTP if OTP doesn't exist in the database
+    const newOTP = generateOTP();
+    findAdmin.otp = newOTP;
+    await findAdmin.save();
+    await sendEmail.sendOTPByEmail(findAdmin.email, newOTP);
+
+    return res
+      .status(200)
+      .json({ status: "success", message: "OTP sent to your email" });
+  }
+
+  if (findAdmin.otp !== otp) {
+    return res.status(401).json({ status: "fail", message: "Invalid OTP" });
+  }
+
+  // OTP is valid, mark it as verified
+  findAdmin.isOTPVerified = true;
+  findAdmin.otp = null; // Clear the stored OTP
+  await findAdmin.save();
+
+  // Continue with generating tokens and allowing login here
+
+  const refreshToken = await generateRefreshToken(findAdmin?._id);
+  const updateuser = await User.findByIdAndUpdate(
+    findAdmin.id,
+    {
+      refreshToken: refreshToken,
+    },
+    { new: true }
+  );
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    maxAge: 72 * 60 * 60 * 1000,
+  });
+
+  res.json({
+    _id: findAdmin?._id,
+    firstname: findAdmin?.firstname,
+    lastname: findAdmin?.lastname,
+    email: findAdmin?.email,
+    mobile: findAdmin?.mobile,
+    token: generateToken(findAdmin?._id),
+  });
 });
 
 // handle refresh token
@@ -135,8 +213,6 @@ const logout = asyncHandler(async (req, res) => {
     secure: true,
   });
   res.sendStatus(204);
-  
-  
 });
 
 // Update a user
@@ -190,13 +266,14 @@ const saveAddress = asyncHandler(async (req, res, next) => {
 
 const getallUser = asyncHandler(async (req, res) => {
   try {
-    const getUsers = await User.find({ role: { $ne: "admin" } }).populate("wishlist");
+    const getUsers = await User.find({ role: { $ne: "admin" } }).populate(
+      "wishlist"
+    );
     res.json(getUsers);
   } catch (error) {
     throw new Error(error);
   }
 });
-
 
 // Get a single user
 
@@ -264,9 +341,12 @@ const unblockUser = asyncHandler(async (req, res) => {
         new: true,
       }
     );
-    res.json({
-      message: "User UnBlocked",
-    }, unblock);
+    res.json(
+      {
+        message: "User UnBlocked",
+      },
+      unblock
+    );
   } catch (error) {
     throw new Error(error);
   }
@@ -334,17 +414,17 @@ const getWishlist = asyncHandler(async (req, res) => {
 });
 
 const userCart = asyncHandler(async (req, res) => {
-  const { productId, colour, quantity,price,size } = req.body;
+  const { productId, colour, quantity, price, size } = req.body;
   const { _id } = req.user;
   validateMongoDbId(_id);
   try {
     const newCart = await new Cart({
       userId: _id,
-      productId, 
+      productId,
       colour,
       price,
       quantity,
-      size
+      size,
     }).save();
     res.json(newCart);
   } catch (error) {
@@ -356,47 +436,50 @@ const getUserCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   validateMongoDbId(_id);
   try {
-    const cart = await Cart.find({ userId: _id }).populate(
-      "productId"
-    ).populate("color");
+    const cart = await Cart.find({ userId: _id })
+      .populate("productId")
+      .populate("color");
     res.json(cart);
   } catch (error) {
     throw new Error(error);
   }
 });
 
-const reomveProductFromCart = asyncHandler(async(req,res) =>{
+const reomveProductFromCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const {cartItemId} = req.params;
+  const { cartItemId } = req.params;
   validateMongoDbId(_id);
   try {
-    const deleteProductFromCart = await Cart.deleteOne({userId:_id,_id:cartItemId})
+    const deleteProductFromCart = await Cart.deleteOne({
+      userId: _id,
+      _id: cartItemId,
+    });
     res.json(deleteProductFromCart);
   } catch (error) {
     throw new Error(error);
   }
-})
+});
 
-const updateProductQuantityFromCart = asyncHandler(async(req,res) =>{
+const updateProductQuantityFromCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const {cartItemId,newQuantity} = req.params;
+  const { cartItemId, newQuantity } = req.params;
   validateMongoDbId(_id);
   try {
-    const cartItem = await Cart.findOne({userId:_id,_id:cartItemId})
+    const cartItem = await Cart.findOne({ userId: _id, _id: cartItemId });
     cartItem.quantity = newQuantity;
-    cartItem.save()
-    res.json(cartItem)
+    cartItem.save();
+    res.json(cartItem);
   } catch (error) {
     throw new Error(error);
   }
-})
+});
 
 const emptyCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   validateMongoDbId(_id);
   try {
     const user = await User.findOne({ _id });
-    const cart = await Cart.findOneAndRemove({ userId:_id });
+    const cart = await Cart.findOneAndRemove({ userId: _id });
     res.json(cart);
   } catch (error) {
     throw new Error(error);
@@ -411,12 +494,14 @@ const applyCoupon = asyncHandler(async (req, res) => {
     const promoCodeDoc = await Coupon.findOne({ name: promoCode });
 
     if (!promoCodeDoc) {
-      return res.status(404).json({ error: 'Promo code not found.' });
+      return res.status(404).json({ error: "Promo code not found." });
     }
 
     // Check if the user has already used the code
     if (promoCodeDoc.usedBy.includes(userId)) {
-      return res.status(400).json({ error: 'Promo code already used by this user.' });
+      return res
+        .status(400)
+        .json({ error: "Promo code already used by this user." });
     }
 
     const discount = promoCodeDoc.discount;
@@ -425,15 +510,23 @@ const applyCoupon = asyncHandler(async (req, res) => {
     promoCodeDoc.usedBy.push(userId);
     await promoCodeDoc.save();
 
-    res.status(200).json({ message: 'Promo code applied successfully.', discount });
+    res
+      .status(200)
+      .json({ message: "Promo code applied successfully.", discount });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error.' });
+    res.status(500).json({ error: "Internal server error." });
   }
 });
 
 const createOrder = asyncHandler(async (req, res) => {
-  const {shippingInfo,orderedItems,totalPrice,totalPriceAfterDiscount,profit} = req.body;
+  const {
+    shippingInfo,
+    orderedItems,
+    totalPrice,
+    totalPriceAfterDiscount,
+    profit,
+  } = req.body;
   const { _id } = req.user;
   try {
     const order = await Order.create({
@@ -442,14 +535,14 @@ const createOrder = asyncHandler(async (req, res) => {
       totalPrice,
       totalPriceAfterDiscount,
       profit,
-      user:_id,
-    })
+      user: _id,
+    });
     res.json({
       order,
-      success: true
-    })
+      success: true,
+    });
   } catch (error) {
-    throw new Error(error)
+    throw new Error(error);
   }
 });
 
@@ -467,20 +560,20 @@ const getOrders = asyncHandler(async (req, res) => {
   }
 });
 
-const getMyOrders = asyncHandler(async(req,res)=>{
-  const {_id} = req.user;
+const getMyOrders = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
   try {
-    const orders = await Order.find({user:_id})
-    .populate("user")
-    .populate("orderedItems.product")
-    .populate("orderedItems.color")
+    const orders = await Order.find({ user: _id })
+      .populate("user")
+      .populate("orderedItems.product")
+      .populate("orderedItems.color");
     res.json({
-      orders
-    })
+      orders,
+    });
   } catch (error) {
-    throw new Error(error)
+    throw new Error(error);
   }
-})
+});
 
 const getAllOrders = asyncHandler(async (req, res) => {
   try {
@@ -513,7 +606,7 @@ const getOrderByUserId = asyncHandler(async (req, res) => {
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
-  console.log(status)
+  console.log(status);
   validateMongoDbId(id);
   try {
     const updateOrderStatus = await Order.findByIdAndUpdate(
@@ -529,22 +622,21 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 });
 
-const googleSignIn = async(req,res) =>{
-  const {email,firstname,mobile} = req.body;
-  try{
-    let user = await User.findOne({email});
-    if(!user){
+const googleSignIn = async (req, res) => {
+  const { email, firstname, mobile } = req.body;
+  try {
+    let user = await User.findOne({ email });
+    if (!user) {
       user = new User({
         email,
         firstname,
-        lastname:'',
-        mobile:mobile || '',
-        role:'user',
+        lastname: "",
+        mobile: mobile || "",
+        role: "user",
         isBlocked: false,
-        cart:[],
-        address:'',
-        wishlist:[],
-      
+        cart: [],
+        address: "",
+        wishlist: [],
       });
       await user.save();
     }
@@ -553,24 +645,23 @@ const googleSignIn = async(req,res) =>{
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.cookie("refreshToken", refreshToken,{
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      maxAge:72*60*60*100,
+      maxAge: 72 * 60 * 60 * 100,
     });
     res.json({
-      _id:user?._id,
+      _id: user?._id,
       firstname: user?.firstname,
-      lastname:user?.lastname,
-      email:user?.email,
-      mobile:user?.mobile,
-      token:token,
-    })
+      lastname: user?.lastname,
+      email: user?.email,
+      mobile: user?.mobile,
+      token: token,
+    });
+  } catch (error) {
+    console.error("Error during Google Sign-in:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-  catch(error){
-    console.error("Error during Google Sign-in:", error)
-    res.status(500).json({message: "Internal server error"});
-  }
-}
+};
 
 module.exports = {
   createUser,
@@ -602,4 +693,5 @@ module.exports = {
   getMyOrders,
   googleSignIn,
   applyCoupon,
+  verifyotp,
 };
