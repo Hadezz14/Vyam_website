@@ -82,30 +82,29 @@ const loginAdmin = asyncHandler(async (req, res) => {
     const otp = generateOTP();
 
     findAdmin.otp = otp;
-    console.log(otp);
     await findAdmin.save();
 
     await sendEmail.sendOTPByEmail(findAdmin.email, otp);
 
-    // const refreshToken = await generateRefreshToken(findAdmin?._id);
-    // const updateuser = await User.findByIdAndUpdate(
-    //   findAdmin.id,
-    //   {
-    //     refreshToken: refreshToken,
-    //   },
-    //   { new: true }
-    // );
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   maxAge: 72 * 60 * 60 * 1000,
-    // });
+    const refreshToken = await generateRefreshToken(findAdmin?._id);
+    const updateuser = await User.findByIdAndUpdate(
+      findAdmin.id,
+      {
+        refreshToken: refreshToken,
+      },
+      { new: true }
+    );
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60 * 1000,
+    });
     res.json({
       _id: findAdmin?._id,
       firstname: findAdmin?.firstname,
       lastname: findAdmin?.lastname,
       email: findAdmin?.email,
       mobile: findAdmin?.mobile,
-      // token: generateToken(findAdmin?._id),
+      token: generateToken(findAdmin?._id),
     });
   } else {
     return res
@@ -128,7 +127,6 @@ const verifyotp = asyncHandler(async (req, res) => {
   }
 
   if (!findAdmin.otp) {
-    // Generate OTP if OTP doesn't exist in the database
     const newOTP = generateOTP();
     findAdmin.otp = newOTP;
     await findAdmin.save();
@@ -145,7 +143,7 @@ const verifyotp = asyncHandler(async (req, res) => {
 
   // OTP is valid, mark it as verified
   findAdmin.isOTPVerified = true;
-  findAdmin.otp = null; // Clear the stored OTP
+  findAdmin.otp = null;
   await findAdmin.save();
 
   // Continue with generating tokens and allowing login here
