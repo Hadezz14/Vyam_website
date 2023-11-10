@@ -19,7 +19,10 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 const corsOptions = {
-      origin: ["https://vyamstore.com", "https://admin.vyamstore.com"],
+  origin: ['https://vyamstore.com', 'https://admin.vyamstore.com'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  optionsSuccessStatus: 204,
+  credentials: true,
 };
 
 app.use(morgan("dev"));
