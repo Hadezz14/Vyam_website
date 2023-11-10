@@ -29,6 +29,7 @@ const {
   applyCoupon,
   googleSignIn,
   verifyotp,
+  resendotp,
 } = require("../controller/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
@@ -41,6 +42,7 @@ router.put("/password", authMiddleware, updatePassword);
 router.post("/login", loginUserCtrl);
 router.post("/admin-login", loginAdmin);
 router.post("/verify-otp", verifyotp);
+router.post("/resend-otp", resendotp);
 router.post("/google-login", googleSignIn);
 router.post("/cart", authMiddleware, userCart);
 router.post("/cart/applycoupon", applyCoupon);

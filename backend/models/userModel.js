@@ -19,7 +19,7 @@ var userSchema = new mongoose.Schema(
     },
     mobile: {
       type: String,
-     },
+    },
     password: {
       type: String,
       // required: true,
@@ -27,6 +27,9 @@ var userSchema = new mongoose.Schema(
     role: {
       type: String,
       default: "user",
+    },
+    otp: {
+      type: String,
     },
     isBlocked: {
       type: Boolean,

@@ -83,7 +83,6 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
     findAdmin.otp = otp;
     await findAdmin.save();
-
     await sendEmail.sendOTPByEmail(findAdmin.email, otp);
 
     const refreshToken = await generateRefreshToken(findAdmin?._id);
@@ -126,17 +125,6 @@ const verifyotp = asyncHandler(async (req, res) => {
     return res.status(403).json({ status: "fail", message: "Not Authorized" });
   }
 
-  if (!findAdmin.otp) {
-    const newOTP = generateOTP();
-    findAdmin.otp = newOTP;
-    await findAdmin.save();
-    await sendEmail.sendOTPByEmail(findAdmin.email, newOTP);
-
-    return res
-      .status(200)
-      .json({ status: "success", message: "OTP sent to your email" });
-  }
-
   if (findAdmin.otp !== otp) {
     return res.status(401).json({ status: "fail", message: "Invalid OTP" });
   }
@@ -145,7 +133,6 @@ const verifyotp = asyncHandler(async (req, res) => {
   findAdmin.isOTPVerified = true;
   findAdmin.otp = null;
   await findAdmin.save();
-
   // Continue with generating tokens and allowing login here
 
   const refreshToken = await generateRefreshToken(findAdmin?._id);
@@ -170,6 +157,23 @@ const verifyotp = asyncHandler(async (req, res) => {
     mobile: findAdmin?.mobile,
     token: generateToken(findAdmin?._id),
   });
+});
+
+// Resend otp
+const resendotp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const findAdmin = await User.findOne({ email });
+
+  if (!findAdmin) {
+    return res.status(403).json({ status: "fail", message: "User not found" });
+  }
+  if (findAdmin) {
+    const otp = generateOTP();
+    findAdmin.otp = otp;
+    await findAdmin.save();
+    await sendEmail.sendOTPByEmail(findAdmin.email, otp);
+  }
+  res.sendStatus(200);
 });
 
 // handle refresh token
@@ -692,4 +696,5 @@ module.exports = {
   googleSignIn,
   applyCoupon,
   verifyotp,
+  resendotp,
 };
