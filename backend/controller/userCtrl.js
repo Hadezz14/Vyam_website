@@ -78,7 +78,6 @@ const loginAdmin = asyncHandler(async (req, res) => {
   }
   if (findAdmin && (await findAdmin.isPasswordMatched(password))) {
     // Generate OTP
-    console.log("Password Check");
     const otp = generateOTP();
 
     findAdmin.otp = otp;
@@ -86,6 +85,8 @@ const loginAdmin = asyncHandler(async (req, res) => {
     await sendEmail.sendOTPByEmail(findAdmin.email, otp);
 
     const refreshToken = await generateRefreshToken(findAdmin?._id);
+
+    // Set the refreshToken in the database
     const updateuser = await User.findByIdAndUpdate(
       findAdmin.id,
       {
@@ -93,17 +94,21 @@ const loginAdmin = asyncHandler(async (req, res) => {
       },
       { new: true }
     );
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
+
+    // Generate and send the access token
     res.json({
       _id: findAdmin?._id,
       firstname: findAdmin?.firstname,
       lastname: findAdmin?.lastname,
       email: findAdmin?.email,
       mobile: findAdmin?.mobile,
-      token: generateToken(findAdmin?._id),
+      token: generateRefreshToken(findAdmin?._id),
+    });
+
+    // Set the refreshToken cookie after sending the response
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60 * 1000,
     });
   } else {
     return res
