@@ -78,7 +78,6 @@ const loginAdmin = asyncHandler(async (req, res) => {
   }
   if (findAdmin && (await findAdmin.isPasswordMatched(password))) {
     // Generate OTP
-    console.log("Password Check");
     const otp = generateOTP();
     console.log(otp);
     findAdmin.otp = otp;
