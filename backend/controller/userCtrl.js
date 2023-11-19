@@ -80,35 +80,56 @@ const loginAdmin = asyncHandler(async (req, res) => {
     // Generate OTP
     console.log("Password Check");
     const otp = generateOTP();
-
+    console.log(otp);
     findAdmin.otp = otp;
     await findAdmin.save();
     await sendEmail.sendOTPByEmail(findAdmin.email, otp);
 
-    const refreshToken = await generateRefreshToken(findAdmin?._id);
-    const updateuser = await User.findByIdAndUpdate(
-      findAdmin.id,
-      {
-        refreshToken: refreshToken,
-      },
-      { new: true }
-    );
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
     res.json({
       _id: findAdmin?._id,
       firstname: findAdmin?.firstname,
       lastname: findAdmin?.lastname,
       email: findAdmin?.email,
       mobile: findAdmin?.mobile,
-      token: generateToken(findAdmin?._id),
     });
   } else {
     return res
       .status(401)
       .json({ status: "fail", message: "Invalid Credentials" });
+  }
+});
+
+const forgotPasswordAdmin = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Check if the user exists and is an admin
+  const admin = await User.findOne({ email, role: "admin" });
+
+  if (!admin) {
+    return res.status(404).json({ status: "fail", message: "User not found" });
+  }
+
+  // Generate OTP
+  const otp = generateOTP();
+  console.log(otp);
+
+  // Save OTP to the admin user
+  admin.otp = otp;
+  await admin.save();
+
+  // Send OTP via email
+  try {
+    await sendEmail.sendOTPByEmail(admin.email, otp);
+    res.json({
+      email:admin.email,
+      status: "success",
+    });
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to send OTP. Please try again later.",
+    });
   }
 });
 
@@ -143,22 +164,24 @@ const verifyotp = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
+  console.log("UU" , updateuser);
+  await updateuser.save();
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     maxAge: 72 * 60 * 60 * 1000,
   });
 
+console.log(updateuser);
   res.json({
     _id: findAdmin?._id,
     firstname: findAdmin?.firstname,
     lastname: findAdmin?.lastname,
     email: findAdmin?.email,
     mobile: findAdmin?.mobile,
-    token: generateToken(findAdmin?._id),
+    token: refreshToken,
   });
 });
-
 // Resend otp
 const resendotp = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -697,4 +720,5 @@ module.exports = {
   applyCoupon,
   verifyotp,
   resendotp,
+  forgotPasswordAdmin
 };
