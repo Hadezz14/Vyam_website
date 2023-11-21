@@ -120,7 +120,7 @@ const forgotPasswordAdmin = asyncHandler(async (req, res) => {
   try {
     await sendEmail.sendOTPByEmail(admin.email, otp);
     res.json({
-      email:admin.email,
+      email: admin.email,
       status: "success",
     });
   } catch (error) {
@@ -163,7 +163,7 @@ const verifyotp = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
-  console.log("UU" , updateuser);
+  console.log("UU", updateuser);
   await updateuser.save();
 
   res.cookie("refreshToken", refreshToken, {
@@ -171,7 +171,7 @@ const verifyotp = asyncHandler(async (req, res) => {
     maxAge: 72 * 60 * 60 * 1000,
   });
 
-console.log(updateuser);
+  console.log(updateuser);
   res.json({
     _id: findAdmin?._id,
     firstname: findAdmin?.firstname,
@@ -646,6 +646,24 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 });
 
+const cancleOrder = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const { id } = req.params;
+  validateMongoDbId(id);
+  try {
+    const cancleorder = await Order.findByIdAndUpdate(
+      id,
+      {
+        OrderStatus: status,
+      },
+      { new: true }
+    );
+    res.json(cancleorder);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 const googleSignIn = async (req, res) => {
   const { email, firstname, mobile } = req.body;
   try {
@@ -719,5 +737,6 @@ module.exports = {
   applyCoupon,
   verifyotp,
   resendotp,
-  forgotPasswordAdmin
+  forgotPasswordAdmin,
+  cancleOrder,
 };

@@ -37,7 +37,7 @@ const sendOTPByEmail = asyncHandler(async (email, otp) => {
     })
   );
   const mailOptions = {
-    from: "lamjalnauraj14@gmail.com",
+    from: "vyamstoree@gmail.com",
     to: email,
     subject: " OTP Verification",
     text: `Your OTP for login  is: ${otp} `,

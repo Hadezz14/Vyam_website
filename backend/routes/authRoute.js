@@ -31,6 +31,7 @@ const {
   verifyotp,
   resendotp,
   forgotPasswordAdmin,
+  cancleOrder,
 } = require("../controller/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
@@ -78,6 +79,7 @@ router.put(
   isAdmin,
   updateOrderStatus
 );
+router.put("/order/cancle-order/:id", authMiddleware, cancleOrder);
 router.put("/edit-user", authMiddleware, updatedUser);
 router.put("/save-address", authMiddleware, saveAddress);
 router.put("/block-user/:id", authMiddleware, isAdmin, blockUser);
