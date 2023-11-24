@@ -663,6 +663,42 @@ const cancleOrder = asyncHandler(async (req, res) => {
     throw new Error(error);
   }
 });
+const calculateOrderTotals = (order) => {
+  let totalPrice = 0;
+  order.orderedItems.forEach((item) => {
+    totalPrice += item.price * item.quantity;
+  });
+  order.totalPrice = totalPrice;
+
+  return order;
+};
+
+const cancleOrderitem = asyncHandler(async (req, res) => {
+  const { orderId, itemId } = req.params;
+  console.log(req.params);
+  try {
+    const order = await Order.findOne({ _id: orderId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    const itemIndex = order.orderedItems.findIndex(
+      (item) => item._id.toString() === itemId
+    );
+    if (itemIndex === -1) {
+      return res.status(404).json({ message: "Item not found in the order" });
+    }
+    order.orderedItems.splice(itemIndex, 1);
+    const updatedOrder = calculateOrderTotals(order);
+    await updatedOrder.save();
+
+    return res.json({
+      message: "Item removed successfully",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
 const googleSignIn = async (req, res) => {
   const { email, firstname, mobile } = req.body;
@@ -739,4 +775,5 @@ module.exports = {
   resendotp,
   forgotPasswordAdmin,
   cancleOrder,
+  cancleOrderitem,
 };

@@ -32,6 +32,7 @@ const {
   resendotp,
   forgotPasswordAdmin,
   cancleOrder,
+  cancleOrderitem,
 } = require("../controller/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
@@ -72,6 +73,11 @@ router.delete(
   "/update-product-cart/:cartItemId/:newQuantity",
   authMiddleware,
   updateProductQuantityFromCart
+);
+router.delete(
+  "/remove-order/:orderId/:itemId",
+  authMiddleware,
+  cancleOrderitem
 );
 router.put(
   "/order/update-order/:id",
